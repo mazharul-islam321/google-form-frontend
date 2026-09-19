@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import { MdOutlineEdit, MdOutlineLinkOff } from "react-icons/md";
 
@@ -12,28 +12,31 @@ const LinkPreviewPopover = ({
 	const isHoveringPopoverRef = useRef(false);
 	const popoverRef = useRef(null);
 
-	const updatePopoverFromAnchor = (anchor) => {
-		if (isModalOpen) {
-			setActiveAnchor(null);
-			return;
-		}
-
-		if (!anchor || !anchor.isConnected) {
-			if (!isHoveringPopoverRef.current) {
+	const updatePopoverFromAnchor = useCallback(
+		(anchor) => {
+			if (isModalOpen) {
 				setActiveAnchor(null);
+				return;
 			}
-			return;
-		}
 
-		const rect = anchor.getBoundingClientRect();
-		setActiveAnchor(anchor);
-		setPosition({
-			top: Math.max(8, rect.top - 48),
-			left: Math.max(8, rect.left),
-		});
-	};
+			if (!anchor || !anchor.isConnected) {
+				if (!isHoveringPopoverRef.current) {
+					setActiveAnchor(null);
+				}
+				return;
+			}
 
-	const checkSelection = () => {
+			const rect = anchor.getBoundingClientRect();
+			setActiveAnchor(anchor);
+			setPosition({
+				top: Math.max(8, rect.top - 48),
+				left: Math.max(8, rect.left),
+			});
+		},
+		[isModalOpen]
+	);
+
+	const checkSelection = useCallback(() => {
 		if (isModalOpen || isHoveringPopoverRef.current) return;
 
 		const sel = window.getSelection();
@@ -52,7 +55,7 @@ const LinkPreviewPopover = ({
 		} else {
 			setActiveAnchor(null);
 		}
-	};
+	}, [isModalOpen, updatePopoverFromAnchor]);
 
 	useEffect(() => {
 		if (isModalOpen) {
@@ -101,7 +104,7 @@ const LinkPreviewPopover = ({
 			window.removeEventListener("scroll", checkSelection, true);
 			window.removeEventListener("resize", checkSelection);
 		};
-	}, [isModalOpen]);
+	}, [isModalOpen, checkSelection, updatePopoverFromAnchor]);
 
 	if (isModalOpen || !activeAnchor) return null;
 
